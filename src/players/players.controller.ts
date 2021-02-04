@@ -22,18 +22,18 @@ export class PlayersController {
 
   @Post()
   @UsePipes(ValidationPipe)
-  async createPlayer(@Body() createPlayerDTO: CreatePlayerDTO): Promise<void> {
+  async createPlayer(@Body() createPlayerDTO: CreatePlayerDTO): Promise<Player> {
     return await this.playerService.createPlayer(createPlayerDTO);
   }
 
   @Put(':_id')
   @UsePipes(ValidationPipe)
-  async updatePlayer(@Body() updatePlayerDTO: UpdatePlayerDTO, @Param('_id', RequestParameterValidation) _id: string): Promise<void> {
+  async updatePlayer(@Body() updatePlayerDTO: UpdatePlayerDTO, @Param('_id', RequestParameterValidation) _id: string): Promise<Player> {
     return await this.playerService.updatePlayer(updatePlayerDTO, _id);
   }
 
   @Delete(':_id')
-  async deletePlayer(@Param('_id', RequestParameterValidation) _id: string): Promise<void> {
+  async deletePlayer(@Param('_id', RequestParameterValidation) _id: string): Promise<string> {
     return await this.playerService.deletePlayer(_id);
   }
   
