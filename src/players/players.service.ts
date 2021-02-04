@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreatePlayerDTO } from './dto/create-player.dto';
 import { Player } from './interfaces/player.interface'
 import { InjectModel } from '@nestjs/mongoose';
@@ -12,14 +12,18 @@ export class PlayersService {
 
   constructor(@InjectModel('Player') private readonly playerModel: Model<Player>) {}
 
-  async createPlayer(createPlayerDTO: CreatePlayerDTO): Promise<void>{
-    const { name, phoneNumber, email } = createPlayerDTO;
+  async createPlayer(createPlayerDTO: CreatePlayerDTO): Promise<void> {
+    const { name, phoneNumber, email, urlPicture = 'https://placeholder.com/180' } = createPlayerDTO;
+    
+    if (await this.findByEmail(email) != null) {
+      throw new BadRequestException(`This e-mail is already being used for another player.`);
+    }
 
     const player = {
       name,
       phoneNumber,
       email,
-      urlPicture: 'https://placeholder.com/180'
+      urlPicture
     };
 
     await this.playerModel.create(player);
@@ -29,36 +33,56 @@ export class PlayersService {
     return await this.playerModel.find();
   }
 
-  async findByEmail(email: string): Promise<Player> {
-    const player = await this.playerModel.findOne({ email }).exec();
+  async findById(_id: string): Promise<Player> {
+    const player = await this.playerModel.findById(_id).exec();
 
     if (!player) {
-      throw new NotFoundException(`Player with given email ${email} was not found!`);
+      throw new NotFoundException(`Player with given _id ${_id} was not found!`);
     }
 
     return player;
   }
 
-  async updatePlayer(updatePlayerDTO: UpdatePlayerDTO, email: string): Promise<void> {
-    const { name, urlPicture } = updatePlayerDTO;
+  async findByEmail(email: string): Promise<Player> {
+    const player = await this.playerModel.findOne({ email }).exec();
 
-    const player: Player = await this.findByEmail(email);
+    console.log(JSON.stringify(player));
+    return player;
+  }
+
+  async updatePlayer(updatePlayerDTO: UpdatePlayerDTO, _id: string): Promise<void> {
+    const { name, email, phoneNumber, urlPicture } = updatePlayerDTO;
+
+    const player: Player = await this.findById(_id);
 
     if (!player) {
-      throw new NotFoundException(`Player with given email ${email} was not found!`);
+      throw new NotFoundException(`Player with given _id ${_id} was not found!`);
     }
 
-    player.name = name;
-    player.urlPicture = urlPicture;
+    if (name) {
+      player.name = name;
+    }
+
+    if (email) {
+      player.email = email;
+    }
+
+    if (phoneNumber) {
+      player.phoneNumber = phoneNumber;
+    }
+
+    if (urlPicture) {
+      player.urlPicture = urlPicture;
+    }
 
     await player.updateOne(player).exec();
   }
 
-  async deletePlayer(email: string): Promise<void> {
-    const player: Player = await this.playerModel.findOneAndDelete({ email });
+  async deletePlayer(_id: string): Promise<void> {
+    const player: Player = await this.playerModel.findOneAndDelete({ _id });
 
     if (!player) {
-      throw new NotFoundException(`Player with given email ${email} was not found!`);
+      throw new NotFoundException(`Player with given _id ${_id} was not found!`);
     }
   }
 }
