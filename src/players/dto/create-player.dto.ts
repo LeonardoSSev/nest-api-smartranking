@@ -4,4 +4,6 @@ export class CreatePlayerDTO {
   readonly email: string;
 
   readonly name: string;
+
+  readonly urlPicture: string
 }
