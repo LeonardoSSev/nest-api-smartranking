@@ -14,6 +14,9 @@ import { CategorySchema } from './interfaces/category.schema';
     }]),
     PlayersModule
   ],
+  exports: [
+    CategoriesService
+  ],
   controllers: [CategoriesController],
   providers: [CategoriesService]
 })
