@@ -14,4 +14,7 @@ export interface Player extends Document {
   rankingPosition: number;
 
   urlPicture: string;
+
+  category: string;
+  
 }

@@ -12,7 +12,11 @@ export const PlayerSchema = new mongoose.Schema({
   name: String,
   ranking: String,
   rankingPosition: Number,
-  urlPicture: String
+  urlPicture: String,
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category'
+  }
 }, {
   timestamps: true,
   collection: 'players'
