@@ -82,6 +82,14 @@ export class CategoriesService {
     return await this.categoryModel.findOneAndUpdate({ _id: categoryId }, { $set: category }).exec();
   }
 
+  async findByPlayerId(playerId: string): Promise<Category> {
+    const player = await this.playersService.findById(playerId);
+
+    this.playersService.validatePlayerExistence(player, playerId);
+
+    return await this.categoryModel.findOne().where('players').in([playerId]).exec();
+  }
+
   validateCategoryExistence(category: Category | null, id: string) {
     if (!category) {
       throw new NotFoundException(`Category with given id ${id} was not found!`);
