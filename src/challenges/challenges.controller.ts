@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ChallengesService } from './challenges.service';
 import { CreateChallengeDTO } from './dto/create-challenge.dto';
+import { CreateChallengeMatchDTO } from '../matches/dto/create-challenge-match.dto';
 import { UpdateChallengeDTO } from './dto/update-challenge.dto';
 import { Challenge } from './interfaces/challenge.interface';
 
@@ -39,6 +40,11 @@ export class ChallengesController {
   @Delete(':id')
   async cancelChallenge(@Param('id') id: string): Promise<void> {
     return await this.challengesService.cancelChallenge(id);
+  }
+
+  @Post(':id/match')
+  async createChallengeMatch(@Body() createChallengeMatch: CreateChallengeMatchDTO, @Param('id') id: string): Promise<Challenge> {
+    return await this.challengesService.createChallengeMatch(createChallengeMatch, id);
   }
 
 }

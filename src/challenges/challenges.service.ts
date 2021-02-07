@@ -2,8 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CategoriesService } from 'src/categories/categories.service';
+import { CreateChallengeMatchDTO } from 'src/matches/dto/create-challenge-match.dto';
+import { MatchesService } from 'src/matches/matches.service';
 import { PlayersService } from 'src/players/players.service';
 import { ArrayHelper } from 'src/shared/helpers/array-helper';
+import { ChallengesValidatorService } from './challenges-validator.service';
 import { CreateChallengeDTO } from './dto/create-challenge.dto';
 import { UpdateChallengeDTO } from './dto/update-challenge.dto';
 import { ChallengeStatusEnum } from './enums/challenge-status.enum';
@@ -15,7 +18,9 @@ export class ChallengesService {
   constructor(
     @InjectModel('Challenge') private readonly challengeModel: Model<Challenge>,
     private readonly playersService: PlayersService,
-    private readonly categoriesService: CategoriesService
+    private readonly categoriesService: CategoriesService,
+    private readonly challengesValidatorService: ChallengesValidatorService,
+    private readonly matchesService: MatchesService
   ) { }
 
   async listAll(): Promise<Challenge[]> {
@@ -35,7 +40,7 @@ export class ChallengesService {
   }
 
   async createChallenge(createChallengeDTO: CreateChallengeDTO): Promise<Challenge> {
-    await this.validatePlayersForChallenge(createChallengeDTO);
+    await this.challengesValidatorService.validatePlayersForChallenge(createChallengeDTO);
 
     const { players, playerRequesterId, challengeDateTime } = createChallengeDTO;
 
@@ -56,7 +61,7 @@ export class ChallengesService {
   async updateChallenge(updateChallengeDTO: UpdateChallengeDTO, id: string): Promise<Challenge> {
     let challenge = await this.findById(id);
 
-    this.validateChallengeExistence(challenge, id);
+    this.challengesValidatorService.validateChallengeExistence(challenge, id);
 
     challenge = this.updateChallengeInfo(updateChallengeDTO, challenge);
     
@@ -66,57 +71,25 @@ export class ChallengesService {
   async cancelChallenge(id: string): Promise<void> {
     const challenge = await this.findById(id);
 
-    this.validateChallengeExistence(challenge, id);
+    this.challengesValidatorService.validateChallengeExistence(challenge, id);
 
     challenge.status = ChallengeStatusEnum.CANCELLED;
 
-    await challenge.save();
+    await challenge.update();
   }
 
-  async validatePlayersForChallenge(createChallengeDTO: CreateChallengeDTO): Promise<void> {
-    const { players: playersIds } = createChallengeDTO;
+  async createChallengeMatch(createChallengeMatchDTO: CreateChallengeMatchDTO, id: string): Promise<Challenge> {
+    const challenge = await this.findById(id);
 
-    await this.validatePlayersForChallengeExistence(playersIds);
+    this.challengesValidatorService.validateChallengeExistence(challenge, id);
+    await this.challengesValidatorService.validatePlayerInChallenge(createChallengeMatchDTO.def, challenge);
 
-    await this.validateChallengeRequester(createChallengeDTO);
+    const match = await this.matchesService.createMatchFromChallenge(challenge, createChallengeMatchDTO);
 
-    await this.validatePlayersInSameCategory(playersIds);
-  }
-  
-  async validatePlayersForChallengeExistence(playersIds: string[]): Promise<void> {
-    playersIds.forEach(async (playerId) => {
-      const player = await this.playersService.findById(playerId);
-  
-      this.playersService.validatePlayerExistence(player, playerId);
-    });
-  }
+    challenge.status = ChallengeStatusEnum.DONE;
+    challenge.match = match;
 
-  async validateChallengeRequester(createChallengeDTO: CreateChallengeDTO): Promise<void> {
-    const isRequesterInPlayers = createChallengeDTO.players.some(playerId => playerId === createChallengeDTO.playerRequesterId);
-
-    if (!isRequesterInPlayers) {
-      throw new BadRequestException(`Requester player with given id ${createChallengeDTO.playerRequesterId} is not within challenge's player!`);
-    }
-  }
-
-  async validatePlayersInSameCategory(playersIds: string[]): Promise<void> {
-    const categories = [];
-    
-    playersIds.forEach(async (playerId) => {
-      const playerCategory = await this.categoriesService.findByPlayerId(playerId);
-
-      categories.push(playerCategory.category);
-    });
-
-    if (!ArrayHelper.areAllValuesTheEquals(categories)) {
-      throw new BadRequestException(`Challenge's player are not from the same category!`);
-    }
-  }
-
-  validateChallengeExistence(challenge: Challenge, id) {
-    if (!challenge) {
-      throw new BadRequestException(`Challenge with given _id ${id} was not found!`);
-    }
+    return await challenge.update();    
   }
 
   private updateChallengeInfo(updateChallengeDTO: UpdateChallengeDTO, challenge: Challenge): Challenge {
