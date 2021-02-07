@@ -42,7 +42,7 @@ export class ChallengesController {
     return await this.challengesService.cancelChallenge(id);
   }
 
-  @Post(':id/match')
+  @Post(':id/matches')
   async createChallengeMatch(@Body() createChallengeMatch: CreateChallengeMatchDTO, @Param('id') id: string): Promise<Challenge> {
     return await this.challengesService.createChallengeMatch(createChallengeMatch, id);
   }

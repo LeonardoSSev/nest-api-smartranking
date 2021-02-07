@@ -40,8 +40,8 @@ export class CategoriesService {
     await categoryForSaving.save();
   }
 
-  async findByCategory(category: string) {
-    return await (await this.categoryModel.findOne({ category })).populated('players').exec();
+  async findByCategory(category: string): Promise<Category> {
+    return await this.categoryModel.findOne({ category }).populate('players').exec();
   } 
 
   async updateCategory(updateCategoryDTO: UpdateCategoryDTO, _id: string): Promise<void> {

@@ -28,7 +28,7 @@ export class ChallengesService {
   }
 
   async findById(id: string): Promise<Challenge> {
-    return await this.challengeModel.findById(id);
+    return await this.challengeModel.findById(id).populate('players');
   }
 
   async findByPlayerId(playerId: string): Promise<Challenge[]> {
@@ -36,7 +36,7 @@ export class ChallengesService {
 
     this.playersService.validatePlayerExistence(player, playerId);
 
-    return await this.challengeModel.find().where('players').in([playerId]).exec();
+    return await this.challengeModel.find().where('players').in([playerId]).populate('players').exec();
   }
 
   async createChallenge(createChallengeDTO: CreateChallengeDTO): Promise<Challenge> {
@@ -75,7 +75,7 @@ export class ChallengesService {
 
     challenge.status = ChallengeStatusEnum.CANCELLED;
 
-    await challenge.update();
+    await challenge.save();
   }
 
   async createChallengeMatch(createChallengeMatchDTO: CreateChallengeMatchDTO, id: string): Promise<Challenge> {
@@ -89,7 +89,7 @@ export class ChallengesService {
     challenge.status = ChallengeStatusEnum.DONE;
     challenge.match = match;
 
-    return await challenge.update();    
+    return await challenge.save();    
   }
 
   private updateChallengeInfo(updateChallengeDTO: UpdateChallengeDTO, challenge: Challenge): Challenge {
