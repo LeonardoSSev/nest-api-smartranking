@@ -15,6 +15,14 @@ export class MatchesService {
     private readonly categoriesService: CategoriesService
   ) {}
 
+  async listAll(): Promise<Match[]> {
+    return await this.matchModel.find();
+  }
+
+  async findById(id: string): Promise<Match> {
+    return await this.matchModel.findById(id).exec();
+  }
+
   async createMatchFromChallenge(challenge: Challenge, createChallengeMatchDTO: CreateChallengeMatchDTO): Promise<Match> {
     const { players, category: categoryName } = challenge;
     const { def, result } = createChallengeMatchDTO;

@@ -4,6 +4,7 @@ import { CategoriesModule } from 'src/categories/categories.module';
 import { PlayersModule } from 'src/players/players.module';
 import { MatchSchema } from './interfaces/match.schema';
 import { MatchesService } from './matches.service';
+import { MatchesController } from './matches.controller';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MatchesService } from './matches.service';
     CategoriesModule
   ],
   exports: [MatchesService],
-  providers: [MatchesService]
+  providers: [MatchesService],
+  controllers: [MatchesController]
 })
 export class MatchesModule {}
